@@ -1,6 +1,6 @@
 # GorillaAlert
 
-![GorillaAlert Icono](icoGestortareas.webp)
+<img src="icoGestortareas.webp" alt="GorillaAlert Screenshot" width="600">
 
 GorillaAlert es un gestor de tareas único y potente, diseñado no solo para organizar tus tareas, sino para garantizar que nunca olvides los eventos importantes. Su característica principal es la capacidad de interrumpir cualquier actividad con un recordatorio de pantalla completa, obligándote a prestar atención a la tarea pendiente. Ideal para personas que suelen estar profundamente concentradas en su trabajo, este programa asegura que no te pierdas recordatorios cruciales como eventos importantes, cumpleaños o tareas críticas.
 
