@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import messagebox, ttk
 from datetime import datetime, timedelta
 import threading
+from pystray import Icon, MenuItem, Menu
+from PIL import Image, ImageDraw
 from tasks import load_tasks, save_tasks, add_task, check_due_tasks
 
 # Load existing tasks
@@ -12,10 +14,10 @@ def update_task_list(task_listbox):
     task_listbox.delete(0, tk.END)
     for task in tasks:
         importance_color = {
-            "Muy Importante": "red",
-            "Importante": "orange",
-            "Regular": "yellow",
-            "Simple": "green"
+            "Muy Importante": "#FF6B6B",
+            "Importante": "#FFA94D",
+            "Regular": "#FFD43B",
+            "Simple": "#69DB7C"
         }.get(task.get("importance", "Regular"), "white")
         task_display = f"{task['name']} - {task['datetime']} ({task.get('importance', 'Regular')})"
         task_listbox.insert(tk.END, task_display)
@@ -31,7 +33,7 @@ def add_task_gui(task_listbox, name_entry, desc_entry, date_entry, time_entry, i
     try:
         task_datetime = datetime.strptime(f"{date} {time}", "%Y-%m-%d %H:%M")
         new_task = add_task(name, description, task_datetime)
-        new_task["importance"] = importance  # Add importance to the task
+        new_task["importance"] = importance
         tasks.append(new_task)
         save_tasks(tasks)
         update_task_list(task_listbox)
@@ -56,91 +58,106 @@ def monitor_tasks(task_listbox):
     while True:
         due_tasks = check_due_tasks(tasks)
         for task in due_tasks:
-            # Crear un pop-up bloqueante personalizado
             popup = tk.Toplevel()
             popup.title("Tarea Pendiente")
-            popup.attributes("-fullscreen", True)  # Hacer que la ventana sea de pantalla completa
+            popup.attributes("-fullscreen", True)
             popup.resizable(False, False)
-
-            # Color de fondo según la importancia
             importance_color = {
-                "Muy Importante": "red",
-                "Importante": "orange",
-                "Regular": "yellow",
-                "Simple": "green"
-            }.get(task.get("importance", "Regular"), "white")
+                "Muy Importante": "#FF6B6B",
+                "Importante": "#FFA94D",
+                "Regular": "#FFD43B",
+                "Simple": "#69DB7C"
+            }.get(task.get("importance", "Regular"), "#FFFFFF")
             popup.configure(bg=importance_color)
 
-            # Mostrar información de la tarea
             tk.Label(
                 popup,
                 text=f"Tarea: {task['name']}",
-                font=("Arial", 24, "bold"),
+                font=("Helvetica", 28, "bold"),
                 bg=importance_color,
                 fg="white"
-            ).pack(pady=20)
+            ).pack(pady=30)
             tk.Label(
                 popup,
                 text=f"Descripción: {task['description']}",
-                font=("Arial", 18),
+                font=("Helvetica", 20),
                 bg=importance_color,
                 fg="white"
             ).pack(pady=20)
 
-            # Botones para completar o posponer la tarea
             def complete_task():
                 tasks.remove(task)
                 save_tasks(tasks)
-                update_task_list(task_listbox)  # Actualizar la lista de tareas
+                update_task_list(task_listbox)
                 popup.destroy()
 
             def postpone_task():
-                # Crear una entrada para los minutos a posponer
                 def apply_postpone():
                     try:
-                        # Leer minutos de la entrada
                         minutes = int(minutes_entry.get())
                         new_time = datetime.now() + timedelta(minutes=minutes)
                         task["datetime"] = new_time.strftime("%Y-%m-%d %H:%M:%S")
                         save_tasks(tasks)
-                        update_task_list(task_listbox)  # Actualizar la lista de tareas
+                        update_task_list(task_listbox)
                         postpone_popup.destroy()
                         popup.destroy()
                     except ValueError:
                         messagebox.showerror("Error", "Ingrese un número válido de minutos.")
 
-                # Crear un pop-up para ingresar los minutos
                 postpone_popup = tk.Toplevel()
                 postpone_popup.title("Posponer tarea")
                 postpone_popup.geometry("300x150")
                 postpone_popup.resizable(False, False)
 
-                tk.Label(postpone_popup, text="Ingrese los minutos para posponer:", font=("Arial", 12)).pack(pady=10)
-                minutes_entry = tk.Entry(postpone_popup, width=10, font=("Arial", 12))
+                tk.Label(postpone_popup, text="Ingrese los minutos para posponer:", font=("Helvetica", 14)).pack(pady=10)
+                minutes_entry = tk.Entry(postpone_popup, width=10, font=("Helvetica", 14))
                 minutes_entry.pack(pady=5)
 
-                tk.Button(postpone_popup, text="Aceptar", command=apply_postpone, font=("Arial", 12)).pack(pady=10)
+                tk.Button(postpone_popup, text="Aceptar", command=apply_postpone, font=("Helvetica", 14)).pack(pady=10)
 
-                postpone_popup.grab_set()  # Bloquear interacción con otras ventanas
+                postpone_popup.grab_set()
                 postpone_popup.focus_set()
 
-            tk.Button(popup, text="Completar la tarea", command=complete_task, font=("Arial", 16)).pack(pady=10)
-            tk.Button(popup, text="Posponer", command=postpone_task, font=("Arial", 16)).pack(pady=10)
+            tk.Button(popup, text="Completar la tarea", command=complete_task, font=("Helvetica", 18)).pack(pady=10)
+            tk.Button(popup, text="Posponer", command=postpone_task, font=("Helvetica", 18)).pack(pady=10)
 
-            # Bloquear cualquier acción en el sistema operativo
-            popup.protocol("WM_DELETE_WINDOW", lambda: None)  # Desactiva el botón de cerrar
-            popup.focus_set()  # Forzar el foco en la ventana
-            popup.grab_set()  # Bloquear interacción con el resto del sistema operativo
+            popup.protocol("WM_DELETE_WINDOW", lambda: None)
+            popup.focus_set()
+            popup.grab_set()
             popup.wait_window()
 
-        threading.Event().wait(60)  # Comprobar cada 60 segundos
+        threading.Event().wait(60)
+
+# Create an icon for the system tray
+def create_tray_icon(root):
+    def show_window(icon, item):
+        icon.stop()
+        root.after(0, root.deiconify)
+
+    def exit_app(icon, item):
+        icon.stop()
+        root.quit()
+
+    # Create a blank icon for the tray
+    icon_path = "icono_gorila.ico"  # FilePath .ico
+    image = Image.open(icon_path)  # Load image .ico
+
+    menu = Menu(
+        MenuItem("Abrir Gestor", lambda: show_window(tray_icon, None)),
+        MenuItem("Salir", lambda: exit_app(tray_icon, None))
+    )
+
+    tray_icon = Icon("Gestor de Tareas", image, menu=menu)
+    tray_icon.run()
+
 
 # Create the main GUI
 def create_gui():
     root = tk.Tk()
     root.title("Gestor de Tareas")
 
-    # Task list frame
+    root.protocol("WM_DELETE_WINDOW", lambda: root.withdraw() or threading.Thread(target=create_tray_icon, args=(root,)).start())
+
     task_frame = tk.Frame(root)
     task_frame.pack(pady=10)
 
@@ -153,24 +170,23 @@ def create_gui():
     task_listbox.config(yscrollcommand=scrollbar.set)
     scrollbar.config(command=task_listbox.yview)
 
-    # Add task frame
     add_task_frame = tk.Frame(root)
     add_task_frame.pack(pady=10)
 
     tk.Label(add_task_frame, text="Nombre:").grid(row=0, column=0, padx=5, pady=5)
-    name_entry = tk.Entry(add_task_frame, width=20)
+    name_entry = tk.Entry(add_task_frame, width=30)
     name_entry.grid(row=0, column=1, padx=5, pady=5)
 
     tk.Label(add_task_frame, text="Descripción:").grid(row=1, column=0, padx=5, pady=5)
-    desc_entry = tk.Entry(add_task_frame, width=20)
+    desc_entry = tk.Entry(add_task_frame, width=30)
     desc_entry.grid(row=1, column=1, padx=5, pady=5)
 
     tk.Label(add_task_frame, text="Fecha (YYYY-MM-DD):").grid(row=2, column=0, padx=5, pady=5)
-    date_entry = tk.Entry(add_task_frame, width=20)
+    date_entry = tk.Entry(add_task_frame, width=30)
     date_entry.grid(row=2, column=1, padx=5, pady=5)
 
     tk.Label(add_task_frame, text="Hora (HH:MM):").grid(row=3, column=0, padx=5, pady=5)
-    time_entry = tk.Entry(add_task_frame, width=20)
+    time_entry = tk.Entry(add_task_frame, width=30)
     time_entry.grid(row=3, column=1, padx=5, pady=5)
 
     tk.Label(add_task_frame, text="Importancia:").grid(row=4, column=0, padx=5, pady=5)
@@ -183,19 +199,13 @@ def create_gui():
         command=lambda: add_task_gui(task_listbox, name_entry, desc_entry, date_entry, time_entry, importance_combo)
     ).grid(row=5, column=0, columnspan=2, pady=10)
 
-    # Delete task button
     tk.Button(
         root, text="Eliminar Tarea",
-        command=lambda: delete_task(task_listbox),
-        font=("Arial", 12)
+        command=lambda: delete_task(task_listbox)
     ).pack(pady=10)
-    
-    
 
-    # Load tasks into the listbox
     update_task_list(task_listbox)
 
-    # Start the task monitor in a separate thread
     threading.Thread(target=lambda: monitor_tasks(task_listbox), daemon=True).start()
 
     root.mainloop()
