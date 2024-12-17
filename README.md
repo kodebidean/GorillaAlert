@@ -11,7 +11,6 @@
 
 - **Gestión de tareas**: Añade, elimina y visualiza tareas con facilidad.
 - **Recordatorios inteligentes**: Recibe notificaciones emergentes que cubren toda la pantalla.
-- **Modo en segundo plano**: Permite que el programa funcione sin necesidad de tener la interfaz abierta.
 - **Inicio automático**: Configurable para ejecutarse al encender el equipo.
 - **Diseño en desarrollo**: Este proyecto es funcional pero en constante evolución.
 
@@ -87,5 +86,6 @@ Desarrollado por kodebidean, estudiante apasionado de la programación y la auto
 <br>
 
 ## ➕ Contribuciones
-<details> <summary>Áreas de mejora</summary> <ul> <li>Mejorar la interfaz visual</li> <li>Añadir nuevas funcionalidades como sincronización con calendarios</li> <li>Optimizar procesos en segundo plano</li> </ul> </details> 
+<details> <summary>Áreas de mejora</summary> <ul> <li>Mejorar la interfaz visual</li> <li>Añadir nuevas funcionalidades como sincronización con calendarios</li> <li>Optimizar procesos en segundo plano</li> 
+<li>zenflow: Actualización del README: eliminar funcionalidad en segundo plano, trabajando en primer plano para evitar problemas.</li> </ul> </details> 
 
